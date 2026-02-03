@@ -1,8 +1,15 @@
-# Full-Glow for Urban Sound Maps
+# **Full-Glow for Urban Sound Maps**
 
-This repository contains an adapted implementation of Full-Glow for urban sound map generation. It is based on [Full-Glow: Fully conditional Glow for more realistic image generation](https://arxiv.org/abs/2012.05846).
+This repository contains an adapted implementation of **Full-Glow** for generating urban sound maps. The architecture is based on:
 
-The original Full-Glow model has been modified to work with sound map data, allowing for the generation of sound maps from building layouts while considering acoustic and environmental conditions like temperature, humidity, and noise levels.
+**Full-Glow: Fully Conditional Glow for More Realistic Image Generation**  
+https://arxiv.org/abs/2012.05846
+
+The corresponding paper for this implementation can be found here:
+
+**Full-Glow for Urban Sound Maps**  
+https://www.arxiv.org/abs/2510.04510
+
 
 ## Training Progress
 
