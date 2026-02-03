@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull:*)",
+      "Read(//e/ba_ergebnisse/urban_sound_25k_baseline/metrics/**)",
+      "Bash(dir:*)",
+      "Read(//e/ba_ergebnisse/ssim_analysis/baseline/**)",
+      "Bash(python tests:*)",
+      "Bash(python:*)",
+      "Read(//e/ba_ergebnisse/ssim_analysis/reflection/**)",
+      "Read(//e/ba_ergebnisse/urban_sound_25k_baseline/evaluation_results/urban_sound_25k_baseline/metrics/**)",
+      "Read(//e/ba_ergebnisse/urban_sound_25k_baseline/evaluation_results/baseline/ssim_analysis/**)",
+      "Read(//e/ba_ergebnisse/urban_sound_25k_diffraction/evaluation_results/urban_sound_25k_diffraction/metrics/**)",
+      "Read(//e/ba_ergebnisse/urban_sound_25k_reflection/evaluation_results/urban_sound_25k_reflection/metrics/**)",
+      "Bash(.\\conditional-soundmap-generation\\Scripts\\python.exe:*)",
+      "Bash(.conditional-soundmap-generationScriptspython.exe toolscreate_review_plots.py)",
+      "Bash(.conditional-soundmap-generationScriptspython.exe \"tools\\create_review_plots.py\")",
+      "Bash(./conditional-soundmap-generation/Scripts/python.exe \"tools/create_review_plots.py\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,27 @@
+\begin{table}[htbp]
+\centering
+\caption{Statistical Significance Analysis: Flow Models vs. Baseline}
+\label{tab:significance}
+\begin{tabular}{llrrrrr}
+\hline
+Regime & Metric & $n$ & $\bar{d}$ & 95\% CI & $p_{\text{Holm}}$ & $\delta$ \\
+\hline
+Diffraction & MAE & 1243 & 0.079 & [-0.02, 0.17] & 0.0000*** & 0.51 \\
+Diffraction & LoS_MAE & 1243 & 1.050 & [0.97, 1.12] & 0.0000*** & 0.96 \\
+Diffraction & NLoS_MAE & 1243 & -1.973 & [-2.10, -1.85] & 0.0000*** & -0.90 \\
+Diffraction & LoS_wMAPE & 1243 & 6.402 & [6.07, 6.72] & 0.0000*** & 0.96 \\
+Diffraction & NLoS_wMAPE & 1243 & -6.600 & [-7.39, -5.85] & 0.0000*** & -0.65 \\
+Diffraction & ssim & 1243 & 0.036 & [0.03, 0.04] & 0.0000*** & 0.77 \\
+Reflection & MAE & 1244 & -1.040 & [-1.08, -1.00] & 0.0000*** & -0.97 \\
+Reflection & LoS_MAE & 1244 & -0.218 & [-0.23, -0.20] & 0.0000*** & -0.61 \\
+Reflection & NLoS_MAE & 1244 & -2.990 & [-3.09, -2.90] & 0.0000*** & -0.99 \\
+Reflection & LoS_wMAPE & 1244 & -0.143 & [-0.23, -0.05] & 0.0000*** & -0.12 \\
+Reflection & NLoS_wMAPE & 1244 & -18.174 & [-18.76, -17.61] & 0.0000*** & -0.99 \\
+Reflection & ssim & 1244 & -0.072 & [-0.07, -0.07] & 0.0000*** & -0.97 \\
+\hline
+\end{tabular}
+\begin{tablenotes}
+\small
+\item Note: $\bar{d}$ = mean scene-wise difference (positive = improvement), CI = bootstrap confidence interval, $p_{\text{Holm}}$ = Holm-adjusted p-value, $\delta$ = Cliff's delta effect size. Significance: *** $p<0.001$, ** $p<0.01$, * $p<0.05$.
+\end{tablenotes}
+\end{table}
