@@ -37,6 +37,15 @@ def parse_args():
                        help="Optimization step to load from checkpoint")
     parser.add_argument("--image_size", type=int, nargs=2, default=[256, 256],
                        help="Image size for generation (height width)")
+
+    # Normierung der Zahlenbedingungen
+    parser.add_argument("--cond_scaling", choices=["train", "legacy"], default="train",
+                       help="train: MinMax über den train-Split wie im Training (Standard). "
+                            "legacy: feste Bereiche (db 0-100, temperature -20-40, humidity 0-100), "
+                            "damit wurden die Kennzahlen der Bachelorarbeit berechnet.")
+    parser.add_argument("--train_csv", type=str, default=None,
+                       help="train.csv für --cond_scaling train "
+                            "(Standard: <dataset_path>/../train/train.csv)")
     return parser.parse_args()
 
 def setup_evaluation_directories(args):
@@ -63,7 +72,8 @@ def setup_evaluation_directories(args):
             'db': args.use_db
         },
         'optim_step': args.optim_step,
-        'image_size': args.image_size
+        'image_size': args.image_size,
+        'cond_scaling': args.cond_scaling
     }
     
     with open(os.path.join(eval_dir, 'evaluation_config.json'), 'w') as f:
@@ -162,31 +172,32 @@ def main():
         transforms.ToTensor(),
     ])
 
-    # Setup scalers for numerical conditions
-    scalers = {}
-    if args.use_db:
-        scalers['db'] = MinMaxScaler()
-        db_range = np.linspace(0, 100, 1000).reshape(-1, 1)
-        scalers['db'].fit(db_range)
-        print("\nDB Scaler Range:")
-        print(f"Min: {scalers['db'].data_min_[0]:.2f}")
-        print(f"Max: {scalers['db'].data_max_[0]:.2f}")
+    # Scaler für die Zahlenbedingungen (Reihenfolge wie im Training: db, temperature, humidity)
+    cond_cols = []
+    if args.use_db: cond_cols.append('db')
+    if args.use_temperature: cond_cols.append('temperature')
+    if args.use_humidity: cond_cols.append('humidity')
 
-    if args.use_temperature:
-        scalers['temperature'] = MinMaxScaler()
-        temp_range = np.linspace(-20, 40, 1000).reshape(-1, 1)
-        scalers['temperature'].fit(temp_range)
-        print("\nTemperature Scaler Range:")
-        print(f"Min: {scalers['temperature'].data_min_[0]:.2f}")
-        print(f"Max: {scalers['temperature'].data_max_[0]:.2f}")
-        
-    if args.use_humidity:
-        scalers['humidity'] = MinMaxScaler()
-        humidity_range = np.linspace(0, 100, 1000).reshape(-1, 1)
-        scalers['humidity'].fit(humidity_range)
-        print("\nHumidity Scaler Range:")
-        print(f"Min: {scalers['humidity'].data_min_[0]:.2f}")
-        print(f"Max: {scalers['humidity'].data_max_[0]:.2f}")
+    scaler = None
+    if cond_cols:
+        if args_cmd.cond_scaling == 'legacy':
+            # Feste Bereiche, so wurden die Kennzahlen der Bachelorarbeit berechnet.
+            # Weicht vom Training ab (dort konstant 95 dB -> 0, combined: Bereiche des train-Splits).
+            legacy = {'db': (0, 100), 'temperature': (-20, 40), 'humidity': (0, 100)}
+            scaler = MinMaxScaler().fit(np.array([[legacy[c][0] for c in cond_cols],
+                                                  [legacy[c][1] for c in cond_cols]], dtype=float))
+        else:
+            # Wie data_handler/soundmap/loader.py im Training: MinMaxScaler über den train-Split
+            train_csv = args_cmd.train_csv or os.path.join(
+                os.path.dirname(os.path.normpath(args_cmd.dataset_path)), 'train', 'train.csv')
+            train_df = pd.read_csv(train_csv)
+            train_vals = np.column_stack([
+                train_df['db'].apply(lambda x: eval(x)['lwd500']).astype(float) if c == 'db'
+                else train_df[c].astype(float)
+                for c in cond_cols])
+            scaler = MinMaxScaler().fit(train_vals)
+        print(f"\nCondition scaling: {args_cmd.cond_scaling} {cond_cols}")
+        print(f"Min: {scaler.data_min_}  Max: {scaler.data_max_}")
 
     # Processing statistics
     total_samples = len(test_csv)
@@ -224,25 +235,18 @@ def main():
                 
                 # Process extra conditions
                 extra_cond_values = []
-                
-                if args.use_db:
-                    try:
-                        db_value = eval(row['db'])['lwd500']
-                        normalized_db = scalers['db'].transform([[db_value]])[0][0]
-                        extra_cond_values.append(normalized_db)
-                    except (KeyError, SyntaxError) as e:
-                        raise ValueError(f"Invalid dB value format: {e}")
-                        
-                if args.use_temperature:
-                    temp_value = float(row['temperature'])
-                    normalized_temp = scalers['temperature'].transform([[temp_value]])[0][0]
-                    extra_cond_values.append(normalized_temp)
-                    
-                if args.use_humidity:
-                    humidity_value = float(row['humidity'])
-                    normalized_humidity = scalers['humidity'].transform([[humidity_value]])[0][0]
-                    extra_cond_values.append(normalized_humidity)
-                
+                if cond_cols:
+                    raw_values = []
+                    for c in cond_cols:
+                        if c == 'db':
+                            try:
+                                raw_values.append(float(eval(row['db'])['lwd500']))
+                            except (KeyError, SyntaxError) as e:
+                                raise ValueError(f"Invalid dB value format: {e}")
+                        else:
+                            raw_values.append(float(row[c]))
+                    extra_cond_values = scaler.transform(np.array([raw_values]))[0].tolist()
+
                 if extra_cond_values:
                     batch['extra_cond'] = torch.tensor(extra_cond_values, dtype=torch.float32).to(device)
                 
