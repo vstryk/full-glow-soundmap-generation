@@ -113,11 +113,13 @@ class TwoGlows(nn.Module):
         w_cond = left_glow_out['all_w_outs']
         coupling_cond = left_glow_out['all_flows_outs']
 
-        # Entferne die unnötige Umkehrung der Listen im Reverse-Fall
-        # if direction == 'reverse':
-        #     act_cond = [list(reversed(cond)) for cond in list(reversed(act_cond))]
-        #     w_cond = [list(reversed(cond)) for cond in list(reversed(w_cond))]
-        #     coupling_cond = [list(reversed(cond)) for cond in list(reversed(coupling_cond))]
+        # Im Reverse-Fall läuft Glow.reverse die Blöcke und Flows von hinten nach vorn durch,
+        # daher müssen die Bedingungslisten umgekehrt werden. (Diese Umkehrung war in Commit
+        # 9526dcc auskommentiert, wodurch das Sampling mit den trainierten Modellen fehlschlug.)
+        if direction == 'reverse':
+            act_cond = [list(reversed(cond)) for cond in list(reversed(act_cond))]
+            w_cond = [list(reversed(cond)) for cond in list(reversed(w_cond))]
+            coupling_cond = [list(reversed(cond)) for cond in list(reversed(coupling_cond))]
 
         for block_idx in range(len(act_cond)):
             for flow_idx in range(len(act_cond[block_idx])):
